@@ -5,9 +5,9 @@
 """
 
 '''
-IMPORTANT: the all in one pipeline code is inconsistant on if it times out or not 66% of the time it runs. 
+IMPORTANT: the all in one pipeline code is inconsistant on if it times out or not 75% of the time it runs but it occationaly does not. 
 I have also split all of the model tests to have there own indivdual pipelines as technically allowed in the instructions.  
-If the code does not run with the pipeline unstring the extra code in the main function and it will run all possible permutations.
+If the code does not run with the pipeline unstring the extra code in the main function and it will run an search manually.
 I talked with Prof Aldenderfer about this. 
 '''
 
@@ -152,6 +152,7 @@ lets now cross validate in these functions with pipelines
 
 '''
 
+#LogisticRegression
 def cross_Logreg(X, y):
     pipe = Pipeline([('scaler', StandardScaler()), ('logreg', LogisticRegression(max_iter=200))])
     cross = cross_val_score(pipe, X, y)
@@ -159,6 +160,7 @@ def cross_Logreg(X, y):
     print(acc)
     return acc
 
+#KNN
 def cross_KNN(X, y):
     num_ex, atr = X.shape
     ex_sqr = math.isqrt(math.ceil(num_ex*.8))
@@ -178,6 +180,7 @@ def cross_KNN(X, y):
     print(f'best k is {rng[index]} with accuracy {max(acc)}')
     return (rng[index], max(acc))
 
+#DecisionTree
 def cross_Dtree(X, y):    
     criter = ['gini', 'entropy']
     max_dep = range(3, 16)
@@ -230,12 +233,13 @@ now lets do everything in one pipeline
 
 def modelpipe(X, y, pca):
     
+    #info for KNN
     num_ex, atr = X.shape
     ex_sqr = math.isqrt(math.ceil(num_ex*.8))
 
     
     pipe = Pipeline([
-        ('estimator', DummyClassifier())    # create the cross validator
+        ('estimator', DummyClassifier())   
     ])
 
     estimator_list = [
@@ -307,7 +311,7 @@ def main():
     #renamed csv because long name was annoying
     file_path = 'kepler.csv'
     
-    #normal = input('do you want to see the non concat pipeline results too? y/n: ')
+    normal = input('do you want to see the non concat pipeline results too (you should probably say n unless the server is having timeout issues)? y/n: ')
     
     bool = [False, True]
     
@@ -319,11 +323,11 @@ def main():
         
         X, y = preprocess(file_path, pca=p)
         
-        '''if normal == 'y':
+        if normal == 'y':
 
             print('-----------------------------------------NORMAL--------------------------------------------')
             
-            cross_classify(X, y)'''
+            cross_classify(X, y)
         
         
         print('----------------------------------------PIPELINE------------------------------------------')
@@ -333,18 +337,16 @@ def main():
         print('------------------------------------------------------------------------------------------')
 
         '''
+        "My final model is the non PCA model I just wanted to be more thourough and produce classification reports and a confusion matrix for both"
+
         QUESTIONS:
         1. Did PCA improve upon or not improve upon the results from when you did not use it?
 
-        PCA didn't have a significant impact on the results based off observing the confustion matrix 
-        and classification_report. While some areas of innacurate guessing imporved others got worse. 
-        It produced similar results.  
+        PCA performed slighly worse classifying both positives and negatives.  
 
         2. Why might this be?
 
-        In my case I would guess PCA captured a very significant amount of the important information 
-        such that entropy was minimized. It may be work looking into further expanding my pca investagation
-        through less componets to deturmine if the models performance. 
+        There were likley enough training exsamples for the curse of dimentionality to be minimal and the information in was present albiet minimal.
 
         3. Was your model able to classify objects equally across labels? How can you tell?
 
