@@ -37,26 +37,18 @@ np_Anom = np.array(df['Anomaly']).reshape(-1,1)
 def nn(np_Anom):
     scaler = MinMaxScaler()
     np_Anom = scaler.fit_transform(np_Anom)
-
-
     window_list = []
     window_size = 24
     max_length = np_Anom.shape[0]
     y = np_Anom[window_size:max_length+1].squeeze()
-
     X = []
-
     #time window
     for i in range (y.shape[0]):
         appendlist = np_Anom[i:i+window_size]
         X.append(appendlist)
-
-
     X = np.array(X).squeeze()
     print(X)
     print(y)
-        
-    
     nn_model = tf.keras.Sequential()
     nn_model.add(tf.keras.Input(shape=(window_size,)))
     nn_model.add(tf.keras.layers.Dense(200, activation='relu'))
@@ -70,13 +62,9 @@ def nn(np_Anom):
         loss="mse",
         metrics=['accuracy']
     )
-
-
     nn_model.fit(X, y, batch_size=40, epochs=30)
     prediction = nn_model.predict(X)
-
     scale_pred = scaler.inverse_transform(prediction)
-
     loss, acc = nn_model.evaluate(X, y)
     print(loss)
     print(acc)
@@ -90,11 +78,8 @@ def nn(np_Anom):
     fig.savefig('nn model')
 
     #predict the next 24 months in the future
-
     pred_months = 24
-
     future_pred_list = y[-window_size:].tolist()
-
     for i in range(pred_months):
         last_window = np.array(future_pred_list[-window_size:]).reshape(1, -1)  # reshape for prediction
         new_prediction = nn_model.predict(last_window)
@@ -115,6 +100,8 @@ def nn(np_Anom):
     ax.set_title('Temperature Anomaly Over Time')
     ax.legend()
     fig.savefig('nn model future')
+    
+    
 
 
 def hmm(X, time):
@@ -142,7 +129,6 @@ def hmm(X, time):
     ax.set_title('Temperature Anomaly Over Time')
     ax.legend()
     fig.tight_layout()
-    plt.tight_layout()
     fig.savefig('hmm')
     
     plt.figure(figsize=(10, 8))
@@ -150,7 +136,46 @@ def hmm(X, time):
     plt.title('Heatmap of Transition Matrix')
     plt.xlabel('To State')
     plt.ylabel('From State')
-    plt.show()
+    plt.savefig('hmm heatmap')
+    
+
+    
+    last_hidden_state = hmm_df['state'].iloc[-1]
+
+    fut_pred_list = [last_hidden_state]
+
+    mean, std = model.means_, np.sqrt(model.covars_)
+
+    # Loop for future predictions
+    for i in range(24):
+        trans_probs = model.transmat_[last_hidden_state]
+
+        next_state = np.random.choice(a=len(trans_probs), p=trans_probs)
+
+        # Update last_hidden_state
+        last_hidden_state = next_state
+
+        # Generate observable output for the next state
+        future_observation = np.random.normal(mean[last_hidden_state][0], std[last_hidden_state][0])
+        fut_pred_list.append(future_observation)
+        
+    dates = pd.date_range(start='2023-09', end='2025-09', freq='M')
+    
+    fut_pred = np.array(fut_pred_list[1::]).squeeze()
+
+    fig, ax = plt.subplots()
+    ax.plot(df['Time'], df['Anomaly'], label='Original')
+    ax.plot(dates, fut_pred, label='Future_Prediciton')
+    ax.set_xlabel('Year')
+    ax.set_ylabel('Temp Anomaly')
+    ax.set_title('Temperature Anomaly Over Time')
+    ax.legend()
+    fig.savefig('hmm model future')
+    print('end of hmm model future')
+
+    #plt.tight_layout()
+
+    
     
     
     
