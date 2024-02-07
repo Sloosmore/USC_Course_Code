@@ -4,11 +4,12 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.metrics import mean_squared_error
 from hmmlearn.hmm import GaussianHMM
 import seaborn as sns
 
 
-#read in file 
+#read in file to DF (Step 2)
 df = pd.read_csv('homework/homework2/Temperature data.csv', delimiter=',')
 """      
 Year  Anomaly
@@ -17,12 +18,12 @@ Year  Anomaly
 2  1850-03    -0.23
 3  1850-04    -0.19
 """
-#to DateTime
+#to DateTime (Step 3)
 df['Time'] = pd.to_datetime(df['Year'], format='%Y-%m')
 
 df = df.drop('Year', axis=1)
 
-#Plot the data
+#Plot the data (Anonmaly vs Year Step 4) 
 fig, ax = plt.subplots()
 ax.plot(df['Time'], df['Anomaly'])
 ax.set_xlabel('Year')
@@ -30,14 +31,16 @@ ax.set_ylabel('Temp Anomaly')
 ax.set_title('Temperature Anomaly Over Time')
 fig.savefig('temp_anomaly.png')
 
-#Numpy array of anon
+#Numpy array of anon (Step 5)
 np_Anom = np.array(df['Anomaly']).reshape(-1,1)
 
 
 def nn(np_Anom):
+    #scale the data (Step 6)
     scaler = MinMaxScaler()
     np_Anom = scaler.fit_transform(np_Anom)
-    window_list = []
+    
+    #create the time window for the data (Step 7)
     window_size = 24
     max_length = np_Anom.shape[0]
     y = np_Anom[window_size:max_length+1].squeeze()
@@ -49,6 +52,8 @@ def nn(np_Anom):
     X = np.array(X).squeeze()
     print(X)
     print(y)
+    
+    #create the neural network model (Step 8)
     nn_model = tf.keras.Sequential()
     nn_model.add(tf.keras.Input(shape=(window_size,)))
     nn_model.add(tf.keras.layers.Dense(200, activation='relu'))
@@ -57,17 +62,29 @@ def nn(np_Anom):
     nn_model.add(tf.keras.layers.Dense(2500, activation='relu'))
     nn_model.add(tf.keras.layers.Dense(500, activation='relu'))
     nn_model.add(tf.keras.layers.Dense(1, activation='linear'))
+    #mse loss function (step 9)
     nn_model.compile(
         optimizer='adam',
         loss="mse",
         metrics=['accuracy']
     )
+    #train the model (Step 10)
     nn_model.fit(X, y, batch_size=40, epochs=30)
+    #predict the data and inverse scale temp (Step 11)
     prediction = nn_model.predict(X)
     scale_pred = scaler.inverse_transform(prediction)
+    #evaluate the model (Step 12)
     loss, acc = nn_model.evaluate(X, y)
-    print(loss)
-    print(acc)
+    mse = mean_squared_error(y, scale_pred)
+    print("MSE: ", mse)
+    print("loss: ", loss)
+    print("Acc: ", acc)
+    """
+    MSE:  0.1503026114530207
+    loss:  0.0023833110462874174
+    Acc:  0.0009708738070912659
+    """
+    #plot prediction (Step 13)
     fig, ax = plt.subplots()
     ax.plot(df['Time'], df['Anomaly'], label='Original')
     ax.plot(df['Time'].iloc[window_size::], scale_pred, label='Prediciton')
@@ -77,7 +94,7 @@ def nn(np_Anom):
     ax.legend()
     fig.savefig('nn model')
 
-    #predict the next 24 months in the future
+    #predict the next 24 months in the future and plot (Step 14) 
     pred_months = 24
     future_pred_list = y[-window_size:].tolist()
     for i in range(pred_months):
@@ -105,10 +122,14 @@ def nn(np_Anom):
 
 
 def hmm(X, time):
+    #train the hmm (Step 15)
     model = GaussianHMM( n_iter=100, n_components=3)
     model.fit(X)
+    #predict the states (Step 16)
     pred = model.predict(X)
     state = np.array(pred)
+    
+    #plot the states (Step 17)
     d = {"state": state, "Anom": X.flatten(), 'time': time}
     hmm_df = pd.DataFrame(data=d)  
     print(hmm_df)
@@ -131,6 +152,7 @@ def hmm(X, time):
     fig.tight_layout()
     fig.savefig('hmm')
     
+    #plot the transition matrix (Step 18)
     plt.figure(figsize=(10, 8))
     sns.heatmap(model.transmat_, annot=True, cmap='coolwarm')
     plt.title('Heatmap of Transition Matrix')
@@ -139,7 +161,7 @@ def hmm(X, time):
     plt.savefig('hmm heatmap')
     
 
-    
+    #bonus, predict the next 24 months in the future and plot (Step 19)
     last_hidden_state = hmm_df['state'].iloc[-1]
 
     fut_pred_list = [last_hidden_state]
@@ -183,4 +205,5 @@ def hmm(X, time):
 
 
 if __name__ == "__main__":
-    hmm(np_Anom, np.array(df['Time']))
+    #hmm(np_Anom, np.array(df['Time']))
+    nn(np_Anom)
