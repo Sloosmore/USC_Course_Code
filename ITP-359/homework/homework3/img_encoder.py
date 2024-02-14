@@ -38,7 +38,6 @@ for i in range(100):
 plt.figure(figsize=(10,10))
 plt.imshow(noisy_full_images)
 plt.savefig('100_noisy_img')
-#plt.show()
 
 X_train = train_images.reshape(-1, 32, 32, 3)
 X_test = test_images.reshape(-1, 32, 32, 3)
@@ -62,20 +61,24 @@ autoencoder.add(tf.keras.layers.Conv2D((24), (3,3), activation='relu', padding='
 autoencoder.add(tf.keras.layers.Conv2D(3, (3,3), activation='sigmoid', padding='same'))
 
 autoencoder.compile(optimizer='adam', loss='mse')
-autoencoder.fit(X_train, X_train, epochs=10, batch_size=128, shuffle=True, validation_data=(X_test, X_test))
+autoencoder.fit(X_train, X_train, epochs=2, batch_size=128, shuffle=True, validation_data=(X_test, X_test))
 
-encoder = tf.keras.Model(inputs=autoencoder.input, outputs=autoencoder.layers[4].output)
 for i in range(50):
-    encoded_imgs = encoder.predict(X_test_noisy_img[i].reshape(1, 32, 32, 3))
+    encoded_imgs = autoencoder.predict(X_test_noisy_img[i].reshape(1, 32, 32, 3))
 
-full_images_compare = Image.new('RGB', (train_images.shape[1]*10, train_images.shape[2]*10))    
+
+full_images_compare = Image.new('RGB', (96, 64))    
 #side by side comparison of original and noisy images
 for i in range(3):
-    encoded_imgs = encoder.predict(X_test_noisy_img[i].reshape(1, 32, 32, 3))
+    print('test')
+    encoded_imgs = autoencoder.predict(X_test_noisy_img[i].reshape(1, 32, 32, 3))
+    
     im = Image.fromarray((X_test_noisy_img[i]*255).reshape(32,32,3).astype('uint8'))
     im2 = Image.fromarray((encoded_imgs.reshape(32,32,3)*255).astype('uint8'))
-    full_images_compare.paste(im, (i*32, 32))
-    full_images_compare.paste(im2, (i*64, train_images.shape[2]*10))
-
-plt.figure(figsize=(10,10))
+    full_images_compare.paste(im, (i*32, 0))
+    full_images_compare.paste(im2, (i*32, 32))
+    
+plt.figure()
+plt.imshow(full_images_compare)
 plt.savefig('noisy_img_encoded')
+plt.show()
