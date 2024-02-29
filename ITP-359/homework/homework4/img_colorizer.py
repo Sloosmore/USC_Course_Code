@@ -32,7 +32,8 @@ axis = axis.ravel()
 
 #plot noisy images
 for i in range(100):
-    axis[i].imshow(np.clip(X_train_grey_img[i], 0.0, 1.0))    
+    #cmap='gray' because the images are in grayscale and otherwise they would be in matplotlib's default colormap even though they are in grayscale
+    axis[i].imshow(np.clip(X_train_grey_img[i], 0.0, 1.0),  cmap='gray')    
     axis[i].axis('off')
 
 plt.savefig('100_noisy_img')
@@ -72,8 +73,12 @@ img2_array = [X_test[:10], X_test_grey_img[:10], grey_pred_images]
 fig, axes = plt.subplots(3, 10, figsize=(10, 3))
 for i, val in enumerate(img2_array):
     for j in range(10):
-        axes[i, j].imshow(val[j])
-        axes[i, j].axis('off')
+        if i == 1:
+            axes[i, j].imshow(val[j], cmap='gray')
+            axes[i, j].axis('off')
+        else:
+            axes[i, j].imshow(val[j])
+            axes[i, j].axis('off')
 
 plt.savefig('comparison3_img')
     
