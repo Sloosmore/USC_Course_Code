@@ -41,7 +41,7 @@ def nn(np_Anom):
     np_Anom = scaler.fit_transform(np_Anom)
     
     #create the time window for the data (Step 7)
-    window_size = 24
+    window_size = 10
     max_length = np_Anom.shape[0]
     y = np_Anom[window_size:max_length+1].squeeze()
     X = []

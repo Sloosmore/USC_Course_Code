@@ -43,6 +43,7 @@ plt.savefig('100_noisy_img')
 autoencoder = tf.keras.Sequential()
 autoencoder.add(tf.keras.Input(shape=(32,32,3)))
 #encoding
+#need to learn more about padding and network architecture
 autoencoder.add(tf.keras.layers.Conv2D(32, (3,3), activation='relu', padding='same', input_shape=(32,32,3)))
 autoencoder.add(tf.keras.layers.MaxPooling2D((2, 2), padding='same'))
 autoencoder.add(tf.keras.layers.Conv2D(64, (3,3), activation='relu', padding='same'))
@@ -84,6 +85,7 @@ for i, val in enumerate(img2_array):
         axes[i, j].axis('off')
 
 plt.savefig('comparison3_img')
-    
+
+#need to learn about imshow
 
     
